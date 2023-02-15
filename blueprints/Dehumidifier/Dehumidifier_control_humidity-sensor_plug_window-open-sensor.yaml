@@ -1,0 +1,103 @@
+blueprint:
+  name: Sleif dehumidifier control 20230213c
+  description: Controls a humidifier dependent of humidity
+  domain: automation
+
+  input:
+    condition_start_time:
+      name: Automation start time
+      description: Automation start time
+      default: "08:00:00"
+      selector:
+        time:
+    condition_end_time:
+      name: Automation end time
+      description: Automation end time
+      default: "22:00:00"
+      selector:
+        time:
+    humidity_current:
+      name: Humidity sensor
+      description: "Sensor that contains the current humidity"
+      selector:
+        entity:
+          domain: sensor
+          multiple: false
+    target_humidity:
+      name: Target humidity
+      description: "Target humidity"
+      default: 60
+      selector:
+        entity:
+          domain: input_number
+          multiple: false
+    open_window_sensor:
+      name: Open window sensor
+      description: "Open window sensor"
+      selector:
+        entity:
+          domain: binary_sensor
+          multiple: false
+    power_plug_1:
+      name: Dehumidifier switch
+      description: "Switch entity of the power plug of the dehumidifier"
+      selector:
+        entity:
+          domain: switch
+          multiple: false
+
+trigger:
+- platform: state
+  entity_id:
+  - !input humidity_current
+  - !input target_humidity
+  - !input open_window_sensor
+  - !input power_plug_1
+- platform: time
+  at:
+    - !input condition_start_time
+    - !input condition_end_time
+  
+variables:
+  condition_start_time_input: !input condition_start_time
+  condition_start_time_value: "{{ condition_start_time_input| today_at() | as_timestamp() | int }}"
+  condition_end_time_input: !input condition_end_time
+  condition_end_time_value: "{{ condition_end_time_input| today_at() | as_timestamp() | int }}"
+  humidity_current_input: !input humidity_current
+  humidity_current_value: "{{ states(humidity_current_input) | float }}"
+  target_humidity_input: !input target_humidity
+  target_humidity_value: "{{ states(target_humidity_input) | float }}"
+  hi: "{{ target_humidity_value | float + 2.5 }}"
+  lo: "{{ target_humidity_value | float - 2.5 }}"
+  open_window_sensor_input: !input open_window_sensor
+  open_window_sensor_value: "{{ states(open_window_sensor_input) | bool }}"
+  power_plug_1_input: !input power_plug_1
+  power_plug_1_value: "{{ power_plug_1_input | lower }}"
+  now_time: "{{ now()|as_timestamp() | int }}"
+
+  is_across_midnight: >
+    {% if condition_start_time_value > condition_end_time_value %}
+    True
+    {% else %}
+    False
+    {% endif %}
+
+  is_within_time_range: >
+    {% if is_across_midnight %}
+    {{ now_time >= condition_start_time_value or now_time < condition_end_time_value }}
+    {% else %}
+    {{ condition_start_time_value <= now_time < condition_end_time_value }}
+    {% endif %}
+
+action:
+- service: >-
+    {% if humidity_current_value > hi and
+        not open_window_sensor_value and is_within_time_range %}
+      switch.turn_on
+    {% elif humidity_current_value < lo or
+        open_window_sensor_value or not is_within_time_range %}
+      switch.turn_off
+    {% else %}
+      switch.turn_{{ power_plug_1_value }}
+    {% endif %}
+  entity_id: !input power_plug_1
