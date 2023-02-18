@@ -38,7 +38,7 @@ blueprint:
           device_class: power
           multiple: false
     actions_notificactions:
-      name: Action(s) when the threshold value has been exceeded
+      name: Action(s) when the thresold value has been exceeded
       default: []
       selector:
         action: {}
@@ -57,7 +57,7 @@ trigger:
     seconds: 5
 - platform: event
   event_type:
-    - automation_reloaded
+    - automation_reloaded  
 
 condition:
   - condition: numeric_state
@@ -66,6 +66,10 @@ condition:
   - condition: state
     entity_id: !input power_plug_1_switch
     state: "on"
+  - condition: numeric_state
+    entity_id:
+      - !input humidity_current
+    above: !input humidity_warning
 
 action:
 - choose: []
