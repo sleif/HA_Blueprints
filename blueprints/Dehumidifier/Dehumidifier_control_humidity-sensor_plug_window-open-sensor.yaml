@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control
-  description: Controles a humidifier dependent of humidify
+  description: "`- Version: 1.0 -`\n\nControls a dehumidifier depending on the air humidity"
   domain: automation
 
   input:
@@ -23,6 +23,14 @@ blueprint:
         entity:
           domain: sensor
           device_class: humidity
+          multiple: false
+    temperature_current:
+      name: temperature sensor
+      description: "Sensor that contains the current temperature"
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
           multiple: false
     target_humidity:
       name: Target humidity
@@ -54,6 +62,7 @@ trigger:
 - platform: state
   entity_id:
   - !input humidity_current
+  - !input temperature_current
   - !input power_plug_1
 - platform: time
   at:
@@ -74,9 +83,19 @@ variables:
   now_time: "{{ now()|as_timestamp() | int }}"
   humidity_current_input: !input humidity_current
   humidity_current_value: "{{ states(humidity_current_input) | float }}"
+  temperature_current_input: !input temperature_current
+  temperature_current_value: "{{ states(temperature_current_input) | float }}"
+  temperature_threshold: 13
+  target_humidity_delta: 5
   target_humidity_input: !input target_humidity
-  target_humidity_value_hi: "{{ target_humidity_input | float(60) + 2.5 }}"
-  target_humidity_value_lo: "{{ target_humidity_input | float(60) - 2.5 }}"
+  target_humidity_value_lo: "{{ target_humidity_input | float(60) - target_humidity_delta/2 }}"
+  #target_humidity_value_hi: "{{ target_humidity_input | float(60) + target_humidity_delta/2 }}"
+  target_humidity_value_hi: >
+    {% if temperature_current_value < temperature_threshold %}
+    {{ target_humidity_input | float(60) + target_humidity_delta/2+target_humidity_delta }}
+    {% else %}
+    {{ target_humidity_input | float(60) + target_humidity_delta/2 }}
+    {% endif %}
   open_window_sensor_input: !input open_window_sensor
   open_window_sensor_value: "{{ states(open_window_sensor_input) | bool(false) }}"
   power_plug_1_input: !input power_plug_1
@@ -100,6 +119,9 @@ action:
         not open_window_sensor_value and is_within_time_range %}
       switch.turn_on
     {% elif humidity_current_value < target_humidity_value_lo or
+        open_window_sensor_value or not is_within_time_range %}
+      switch.turn_off
+    {% elif temperature_current_value < temperature_threshold and humidity_current_value < target_humidity_value_hi - target_humidity_delta + 0.5 or
         open_window_sensor_value or not is_within_time_range %}
       switch.turn_off
     {% else %}
