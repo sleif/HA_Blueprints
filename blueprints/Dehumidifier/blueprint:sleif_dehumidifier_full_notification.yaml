@@ -38,7 +38,7 @@ blueprint:
           device_class: power
           multiple: false
     actions_notificactions:
-      name: Action(s) when the thresold value has been exceeded
+      name: Action(s) when the threshold value has been exceeded
       default: []
       selector:
         action: {}
