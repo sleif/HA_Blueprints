@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier full notification
-  description: Send a notification when the water tank is full
+  description: "`- Version: 1.0 -`\n\nSend a notification when the water tank is full"
   domain: automation
 
   input:
@@ -57,7 +57,7 @@ trigger:
     seconds: 5
 - platform: event
   event_type:
-    - automation_reloaded  
+    - automation_reloaded
 
 condition:
   - condition: numeric_state
