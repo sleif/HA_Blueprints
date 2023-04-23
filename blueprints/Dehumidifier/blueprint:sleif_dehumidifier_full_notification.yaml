@@ -44,33 +44,37 @@ blueprint:
         action: {}
 
 trigger:
-- platform: state
-  entity_id:
-    - !input power_plug_1_switch
-- platform: numeric_state
-  entity_id:
-    - !input humidity_current
-  above: !input humidity_warning
-  for:
-    hours: 0
-    minutes: 15
-    seconds: 5
-- platform: event
-  event_type:
-    - automation_reloaded
+  - platform: state
+    entity_id:
+      - !input power_plug_1_switch
+  - platform: numeric_state
+    entity_id:
+      - !input humidity_current
+    above: !input humidity_warning
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 5
+  - platform: event
+    event_type:
+      - automation_reloaded
 
 condition:
   - condition: numeric_state
     entity_id: !input power_plug_1_power
     below: 2
+    for:
+      seconds: 30
   - condition: state
     entity_id: !input power_plug_1_switch
     state: "on"
+    for:
+      seconds: 30
   - condition: numeric_state
     entity_id:
       - !input humidity_current
     above: !input humidity_warning
 
 action:
-- choose: []
-  default: !input actions_notificactions
+  - choose: []
+    default: !input actions_notificactions
