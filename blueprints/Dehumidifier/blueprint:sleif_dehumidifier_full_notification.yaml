@@ -49,6 +49,14 @@ trigger:
       - !input power_plug_1_switch
   - platform: numeric_state
     entity_id:
+      - !input power_plug_1_power
+    below: 2
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 30
+  - platform: numeric_state
+    entity_id:
       - !input humidity_current
     above: !input humidity_warning
     for:
@@ -63,8 +71,6 @@ condition:
   - condition: numeric_state
     entity_id: !input power_plug_1_power
     below: 2
-    for:
-      seconds: 30
   - condition: state
     entity_id: !input power_plug_1_switch
     state: "on"
