@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control
-  description: "`- Version: 1.0 -`\n\nControls a dehumidifier depending on the air humidity"
+  description: "`- Version: 1.1 -`\n\nControls a dehumidifier depending on the air humidity"
   domain: automation
 
   input:
