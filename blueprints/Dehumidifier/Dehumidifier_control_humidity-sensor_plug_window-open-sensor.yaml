@@ -16,6 +16,14 @@ blueprint:
       default: "22:00:00"
       selector:
         time:
+    helper_fewo_occupancy:
+      name: (OPTIONAL) Fewo Occupancy Helper
+      description: Fewo Occupancy Helper
+      default: none
+      selector:
+        entity:
+          domain: input_boolean
+          multiple: false
     humidity_current:
       name: Humidity sensor
       description: "Sensor that contains the current humidity"
@@ -63,7 +71,7 @@ trigger:
   entity_id:
   - !input humidity_current
   - !input temperature_current
-  - !input power_plug_1
+  # - !input power_plug_1
 - platform: time
   at:
   - !input condition_start_time
@@ -81,6 +89,8 @@ variables:
   condition_end_time_input: !input condition_end_time
   condition_end_time_value: "{{ condition_end_time_input| today_at() | as_timestamp() | int }}"
   now_time: "{{ now()|as_timestamp() | int }}"
+  helper_fewo_occupancy_input: !input helper_fewo_occupancy
+  helper_fewo_occupancy_value: "{{ states(helper_fewo_occupancy_input) | bool(false) }}"
   humidity_current_input: !input humidity_current
   humidity_current_value: "{{ states(humidity_current_input) | float }}"
   temperature_current_input: !input temperature_current
@@ -108,9 +118,9 @@ variables:
     {% endif %}
   is_within_time_range: >
     {% if is_across_midnight %}
-    {{ now_time >= condition_start_time_value or now_time < condition_end_time_value }}
+    {{ ( now_time >= condition_start_time_value or now_time < condition_end_time_value ) or not helper_fewo_occupancy_value }}
     {% else %}
-    {{ condition_start_time_value <= now_time < condition_end_time_value }}
+    {{ condition_start_time_value <= now_time < condition_end_time_value or not helper_fewo_occupancy_value }}
     {% endif %}
 
 action:
