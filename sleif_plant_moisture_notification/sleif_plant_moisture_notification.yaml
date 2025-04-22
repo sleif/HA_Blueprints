@@ -27,20 +27,26 @@ blueprint:
       selector:
         text: {}
 
+variables:
+  _moisture_sensor: !input moisture_sensor
+
 trigger:
   - platform: template
     value_template: >-
-      {{ states(input.moisture_sensor) in ['unknown', 'unavailable'] or
-         (states(input.moisture_sensor) | float(default=9999)) < 30 }}
+      {{ states(_moisture_sensor) in ['unknown', 'unavailable'] or
+         (states(_moisture_sensor) | float(default=9999)) < 30 }}
     for:
       seconds: 10
 
   - platform: template
     value_template: >-
-      {{ states(input.moisture_sensor) == 'ok' or
-         (states(input.moisture_sensor) | float(default=9999)) >= 30 }}
+      {{ states(_moisture_sensor) == 'ok' or
+         (states(_moisture_sensor) | float(default=9999)) >= 30 }}
     for:
       seconds: 10
+  - platform: event
+    event_type:
+      - automation_reloaded
 
 action:
   - choose:
