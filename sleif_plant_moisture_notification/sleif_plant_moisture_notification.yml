@@ -18,7 +18,8 @@ blueprint:
     notify_service:
       name: Notification Service
       selector:
-        service: {}
+        entity:
+          domain: notify
     plant_name:
       name: Plant Name
       description: Used in the notification message
