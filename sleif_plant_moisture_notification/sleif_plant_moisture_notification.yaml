@@ -1,6 +1,6 @@
 blueprint:
   name: sleif plant moisture notification
-  description: "`- Version: 1.2 -`\n\nMonitors a moisture sensor. If the value
+  description: "`- Version: 1.1 -`\n\nMonitors a moisture sensor. If the value
     is low (or sensor is unavailable), it turns on a status light and sends a
     notification. When moisture is OK again, it turns off the light."
   domain: automation
@@ -27,20 +27,17 @@ blueprint:
       selector:
         text: {}
 
-variables:
-  _moisture_sensor: !input moisture_sensor
-
 trigger:
   - platform: template
     value_template: >-
-      {% set value = states(_moisture_sensor) %}
+      {% set value = {{ states(input.moisture_sensor) }} %}
       {{ value in ['unknown', 'unavailable']
         or (value | float(default=9999)) < 30 }}
     for:
       seconds: 10
   - platform: template
     value_template: >-
-      {% set value = states(_moisture_sensor) %}
+      {% set value = {{states( input.moisture_sensor }}) %}
       {{ value == 'ok' or (value | float(default=9999)) >= 30 }}
     for:
       seconds: 10
@@ -50,7 +47,7 @@ action:
       - conditions:
           - condition: template
             value_template: >-
-              {% set value = states(_moisture_sensor) %}
+              {% set value = {{ states(input.moisture_sensor )}} %}
               {{ value in ['unknown', 'unavailable']
                 or (value | float(default=9999)) < 30 }}
         sequence:
@@ -63,7 +60,7 @@ action:
       - conditions:
           - condition: template
             value_template: >-
-              {% set value = states(_moisture_sensor) %}
+              {% set value = {{ states(input.moisture_sensor )}} %}
               {{ value == 'ok' or (value | float(default=9999)) >= 30 }}
         sequence:
           - service: light.turn_off
