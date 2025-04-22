@@ -27,17 +27,20 @@ blueprint:
       selector:
         text: {}
 
+variables:
+  _moisture_sensor: !input moisture_sensor
+
 trigger:
   - platform: template
     value_template: >-
-      {% set value = states(input.moisture_sensor) %}
+      {% set value = states(_moisture_sensor) %}
       {{ value in ['unknown', 'unavailable']
         or (value | float(default=9999)) < 30 }}
     for:
       seconds: 10
   - platform: template
     value_template: >-
-      {% set value = states(input.moisture_sensor) %}
+      {% set value = states(_moisture_sensor) %}
       {{ value == 'ok' or (value | float(default=9999)) >= 30 }}
     for:
       seconds: 10
@@ -47,7 +50,7 @@ action:
       - conditions:
           - condition: template
             value_template: >-
-              {% set value = states(input.moisture_sensor) %}
+              {% set value = states(_moisture_sensor) %}
               {{ value in ['unknown', 'unavailable']
                 or (value | float(default=9999)) < 30 }}
         sequence:
@@ -60,7 +63,7 @@ action:
       - conditions:
           - condition: template
             value_template: >-
-              {% set value = states(input.moisture_sensor) %}
+              {% set value = states(_moisture_sensor) %}
               {{ value == 'ok' or (value | float(default=9999)) >= 30 }}
         sequence:
           - service: light.turn_off
