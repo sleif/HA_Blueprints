@@ -1,6 +1,6 @@
 blueprint:
-  name: Feuchtigkeit mit Statuslicht
-  description: "`- Version: 1.0 -`\n\nMonitors a moisture sensor. If the value
+  name: sleif plant moisture notification
+  description: "`- Version: 1.1 -`\n\nMonitors a moisture sensor. If the value
     is low (or sensor is unavailable), it turns on a status light and sends a
     notification. When moisture is OK again, it turns off the light."
   domain: automation
