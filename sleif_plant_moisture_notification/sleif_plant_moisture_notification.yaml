@@ -1,6 +1,6 @@
 blueprint:
   name: sleif plant moisture notification
-  description: "`- Version: 1.6 -`\n\nMonitors a moisture sensor. If the value
+  description: "`- Version: 1.7 -`\n\nMonitors a moisture sensor. If the value
     is low (or sensor is unavailable), it turns on a status light and sends a
     notification. When moisture is OK again, it turns off the light."
   domain: automation
@@ -27,26 +27,29 @@ blueprint:
       selector:
         text: {}
 
-variables:
-  _moisture_sensor: !input moisture_sensor
-
 trigger:
-  - platform: template
-    value_template: >-
-      {{ states(_moisture_sensor) in ['unknown', 'unavailable'] or
-         (states(_moisture_sensor) | float(default=9999)) < 30 }}
+  - platform: numeric_state
+    entity_id: !input moisture_sensor
+    below: 30
     for:
       seconds: 10
 
-  - platform: template
-    value_template: >-
-      {{ states(_moisture_sensor) == 'ok' or
-         (states(_moisture_sensor) | float(default=9999)) >= 30 }}
+  - platform: numeric_state
+    entity_id: !input moisture_sensor
+    above: 30
     for:
       seconds: 10
+
+  - platform: state
+    entity_id: !input moisture_sensor
+    to:
+      - unavailable
+      - unknown
+    for:
+      seconds: 10
+
   - platform: event
-    event_type:
-      - automation_reloaded
+    event_type: automation_reloaded
 
 action:
   - choose:
