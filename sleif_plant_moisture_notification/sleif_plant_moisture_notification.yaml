@@ -1,6 +1,6 @@
 blueprint:
   name: sleif plant moisture notification
-  description: "`- Version: 1.8 -`\n\nMonitors a moisture sensor. If the value
+  description: "`- Version: 1.9 -`\n\nMonitors a moisture sensor. If the value
     is low (or sensor is unavailable), it turns on a status light and sends a
     notification. When moisture is OK again, it turns off the light."
   domain: automation
@@ -53,6 +53,7 @@ trigger:
 
 variables:
   _moisture_sensor: !input moisture_sensor
+  _plant_name: !input plant_name
 action:
   - choose:
       - conditions:
@@ -64,7 +65,7 @@ action:
         sequence:
           - service: !input notify_service
             data:
-              message: "{{ input.plant_name }} needs watering! (Moisture below 30%)"
+              message: "{{ _plant_name }} needs watering! (Moisture below 30%)"
           - service: light.turn_on
             target:
               entity_id: !input status_light
