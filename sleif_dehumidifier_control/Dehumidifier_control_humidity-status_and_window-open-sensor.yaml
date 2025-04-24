@@ -1,0 +1,152 @@
+blueprint:
+  name: sleif dehumidifier control
+  description: "`- Version: 1.1 -`\n\nControls a dehumidifier depending on the humidity"
+  domain: automation
+
+  input:
+    condition_start_time:
+      name: Automation start time
+      description: Automation start time
+      default: "08:00:00"
+      selector:
+        time:
+    condition_end_time:
+      name: Automation end time
+      description: Automation end time
+      default: "22:00:00"
+      selector:
+        time:
+    helper_fewo_occupancy:
+      name: (OPTIONAL) Fewo Occupancy Helper
+      description: Fewo Occupancy Helper
+      default: none
+      selector:
+        entity:
+          domain: input_boolean
+          multiple: false
+    humidity_current:
+      name: Humidity sensor
+      description: "Sensor that contains the current humidity"
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+          multiple: false
+    temperature_current:
+      name: temperature sensor
+      description: "Sensor that contains the current temperature"
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+          multiple: false
+    target_humidity:
+      name: Target humidity
+      description: "Target humidity"
+      default: none
+      selector:
+        number:
+          min: 45
+          max: 70
+          step: 5
+          unit_of_measurement: "%"
+    open_window_sensor:
+      name: (OPTIONAL) Open window sensor
+      description: "Open window sensor"
+      default: none
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: opening
+    dehumidifier:
+      name: Dehumidifier
+      description: "Dehumidifier device"
+      selector:
+        entity:
+          domain: switch
+          multiple: false
+
+trigger:
+- platform: state
+  entity_id:
+  - !input humidity_current
+  - !input temperature_current
+  # - !input dehumidifier
+- platform: time
+  at:
+  - !input condition_start_time
+  - !input condition_end_time
+- platform: template
+  value_template: >-
+    "{% if is_state('open_window_sensor', ['on', 'off']) %}true{% endif %}"
+- platform: event
+  event_type:
+  - automation_reloaded
+
+variables:
+  condition_start_time_input: !input condition_start_time
+  condition_start_time_value: "{{ condition_start_time_input | today_at() | as_timestamp() | int }}"
+  condition_end_time_input: !input condition_end_time
+  condition_end_time_value: "{{ condition_end_time_input| today_at() | as_timestamp() | int }}"
+  now_time: "{{ now()|as_timestamp() | int }}"
+  helper_fewo_occupancy_input: !input helper_fewo_occupancy
+  helper_fewo_occupancy_value: "{{ states(helper_fewo_occupancy_input) | bool(false) }}"
+  humidity_current_input: !input humidity_current
+  humidity_current_value: "{{ states(humidity_current_input) | float }}"
+  temperature_current_input: !input temperature_current
+  temperature_current_value: "{{ states(temperature_current_input) | float }}"
+  temperature_threshold: 13
+  target_humidity_delta: 5
+  target_humidity_input: !input target_humidity
+  target_humidity_value_lo: "{{ target_humidity_input | float(60) - target_humidity_delta/2 }}"
+  #target_humidity_value_hi: "{{ target_humidity_input | float(60) + target_humidity_delta/2 }}"
+  target_humidity_value_hi: >
+    {% if temperature_current_value < temperature_threshold %}
+    {{ target_humidity_input | float(60) + target_humidity_delta/2+target_humidity_delta }}
+    {% else %}
+    {{ target_humidity_input | float(60) + target_humidity_delta/2 }}
+    {% endif %}
+  open_window_sensor_input: !input open_window_sensor
+  open_window_sensor_value: "{{ states(open_window_sensor_input) | bool(false) }}"
+  dehumidifier_input: !input dehumidifier
+  dehumidifier_value: "{{ states(dehumidifier_input) | lower }}"
+  is_across_midnight: >
+    {% if condition_start_time_value > condition_end_time_value %}
+    True
+    {% else %}
+    False
+    {% endif %}
+  is_within_time_range: >
+    {% if is_across_midnight %}
+    {{ ( now_time >= condition_start_time_value or now_time < condition_end_time_value ) or not helper_fewo_occupancy_value }}
+    {% else %}
+    {{ condition_start_time_value <= now_time < condition_end_time_value or not helper_fewo_occupancy_value }}
+    {% endif %}
+
+actions:
+  - entity_id: !input dehumidifier
+    action: >-
+      {% if humidity_current_value > target_humidity_value_hi and
+          not open_window_sensor_value and is_within_time_range %}
+        switch.turn_on
+      {% elif humidity_current_value < target_humidity_value_lo or
+          open_window_sensor_value or not is_within_time_range %}
+        switch.turn_off
+      {% elif temperature_current_value < temperature_threshold and humidity_current_value < target_humidity_value_hi - target_humidity_delta + 0.5 or
+          open_window_sensor_value or not is_within_time_range %}
+        switch.turn_off
+      {% else %}
+        switch.turn_{{ dehumidifier_value }}
+      {% endif %}
+  - action: select.select_option
+    metadata: {}
+    data:
+      option: humidity
+    target:
+      entity_id: select.arete_two_12l_fewo41_mode
+  - action: number.set_value
+    metadata: {}
+    data:
+      value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
+    target:
+      entity_id: number.arete_two_12l_fewo41_target_humidity
