@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.2 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.3 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -43,7 +43,7 @@ blueprint:
     target_humidity:
       name: Target humidity
       description: "Target humidity"
-      default: none
+      default: 60
       selector:
         number:
           min: 45
@@ -141,7 +141,7 @@ actions:
   - action: select.select_option
     metadata: {}
     data:
-      option: humidity
+      option: Humidity
     target:
       entity_id: select.arete_two_12l_fewo41_mode
   - action: number.set_value
