@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.4 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.5 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -150,9 +150,11 @@ actions:
       - conditions:
           - condition: trigger
             id: humidity_high
-          - condition: state
-            entity_id: !input dehumidifier
-            state: "off"
+          # - condition: state
+          #   entity_id: !input dehumidifier
+          #   state: "off"
+          - condition: template
+            value_template: "{{ not is_state(dehumidifier, dehumidifier_value)}}"
         sequence:
           - service: "{{ power_action }}"
             target:
@@ -160,9 +162,11 @@ actions:
       - conditions:
           - condition: trigger
             id: humidity_low
-          - condition: state
-            entity_id: !input dehumidifier
-            state: "on"
+          # - condition: state
+          #   entity_id: !input dehumidifier
+          #   state: "on"
+          - condition: template
+            value_template: "{{ not is_state(dehumidifier, dehumidifier_value)}}"
         sequence:
           - service: "{{ power_action }}"
             target:
