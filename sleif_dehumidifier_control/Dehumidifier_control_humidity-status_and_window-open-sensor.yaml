@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.6 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.7 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -69,27 +69,18 @@ blueprint:
 trigger:
   - platform: state
     entity_id:
-    - !input humidity_current
-    - !input temperature_current
-    # - !input dehumidifier
-  # - platform: time
-  #   at:
-  #   - !input condition_start_time
-  #   - !input condition_end_time
-  # - platform: numeric_state
-  #   entity_id: !input humidity_current
-  #   above: !input target_humidity
-  #   id: humidity_high
-  # - platform: numeric_state
-  #   entity_id: !input humidity_current
-  #   below: !input target_humidity
-  #   id: humidity_low
-  # - platform: template
-  #   value_template: >-
-  #     "{% if is_state('open_window_sensor', ['on', 'off']) %}true{% endif %}"
-  # - platform: event
-  #   event_type:
-  #     - automation_reloaded
+      - !input humidity_current
+      - !input temperature_current
+  - platform: time
+    at:
+      - !input condition_start_time
+      - !input condition_end_time
+  - platform: template
+    value_template: >-
+      "{% if is_state('open_window_sensor', ['on', 'off']) %}true{% endif %}"
+  - platform: event
+    event_type:
+      - automation_reloaded
 
 variables:
   condition_start_time_input: !input condition_start_time
@@ -130,19 +121,6 @@ variables:
     {% else %}
     {{ condition_start_time_value <= now_time < condition_end_time_value or not helper_fewo_occupancy_value }}
     {% endif %}
-  power_action: >-
-      {% if humidity_current_value > target_humidity_value_hi and
-          not open_window_sensor_value and is_within_time_range %}
-        switch.turn_on
-      {% elif humidity_current_value < target_humidity_value_lo or
-          open_window_sensor_value or not is_within_time_range %}
-        switch.turn_off
-      {% elif temperature_current_value < temperature_threshold and humidity_current_value < target_humidity_value_hi - target_humidity_delta + 0.5 or
-          open_window_sensor_value or not is_within_time_range %}
-        switch.turn_off
-      {% else %}
-        switch.turn_{{ dehumidifier_value }}
-      {% endif %}
   power_target: >-
       {% if humidity_current_value > target_humidity_value_hi and
           not open_window_sensor_value and is_within_time_range %}
@@ -156,61 +134,26 @@ variables:
       {% else %}
         {{ dehumidifier_value }}
       {% endif %}
-
+  power_action: "{{ 'switch.turn_' ~ power_target }}"
 
 actions:
   - choose:
       - conditions:
-          # - condition: trigger
-          #   id: humidity_high
-          # - condition: state
-          #   entity_id: !input dehumidifier
-          #   state: "off"
           - condition: template
             value_template: '{{ states(dehumidifier_input) != power_target }}'
         sequence:
           - service: "{{ power_action }}"
             target:
               entity_id: !input dehumidifier
-      # - conditions:
-      #     - condition: trigger
-      #       id: humidity_low
-      #     # - condition: state
-      #     #   entity_id: !input dehumidifier
-      #     #   state: "on"
-      #     - condition: template
-      #       value_template: '{{ states(dehumidifier_input) != power_target }}'
-      #   sequence:
-      #     - service: "{{ power_action }}"
-      #       target:
-      #         entity_id: !input dehumidifier
-
-
-
-
-  # - entity_id: !input dehumidifier
-  #   action: >-
-  #     {% if humidity_current_value > target_humidity_value_hi and
-  #         not open_window_sensor_value and is_within_time_range %}
-  #       switch.turn_on
-  #     {% elif humidity_current_value < target_humidity_value_lo or
-  #         open_window_sensor_value or not is_within_time_range %}
-  #       switch.turn_off
-  #     {% elif temperature_current_value < temperature_threshold and humidity_current_value < target_humidity_value_hi - target_humidity_delta + 0.5 or
-  #         open_window_sensor_value or not is_within_time_range %}
-  #       switch.turn_off
-  #     {% else %}
-  #       switch.turn_{{ dehumidifier_value }}
-  #     {% endif %}
-  # - action: select.select_option
-  #   metadata: {}
-  #   data:
-  #     option: Humidity
-  #   target:
-  #     entity_id: select.arete_two_12l_fewo41_mode
-  # - action: number.set_value
-  #   metadata: {}
-  #   data:
-  #     value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
-  #   target:
-  #     entity_id: number.arete_two_12l_fewo41_target_humidity
+          - action: select.select_option
+            metadata: {}
+            data:
+              option: Humidity
+            target:
+              entity_id: select.arete_two_12l_fewo41_mode
+          - action: number.set_value
+            metadata: {}
+            data:
+              value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
+            target:
+              entity_id: number.arete_two_12l_fewo41_target_humidity
