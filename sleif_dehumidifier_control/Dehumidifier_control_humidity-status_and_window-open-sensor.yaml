@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.5 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.6 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -67,23 +67,23 @@ blueprint:
           multiple: false
 
 trigger:
-  # - platform: state
-  #   entity_id:
-  #   - !input humidity_current
-  #   - !input temperature_current
-  #   # - !input dehumidifier
+  - platform: state
+    entity_id:
+    - !input humidity_current
+    - !input temperature_current
+    # - !input dehumidifier
   # - platform: time
   #   at:
   #   - !input condition_start_time
   #   - !input condition_end_time
-  - platform: numeric_state
-    entity_id: !input humidity_current
-    above: !input target_humidity
-    id: humidity_high
-  - platform: numeric_state
-    entity_id: !input humidity_current
-    below: !input target_humidity
-    id: humidity_low
+  # - platform: numeric_state
+  #   entity_id: !input humidity_current
+  #   above: !input target_humidity
+  #   id: humidity_high
+  # - platform: numeric_state
+  #   entity_id: !input humidity_current
+  #   below: !input target_humidity
+  #   id: humidity_low
   # - platform: template
   #   value_template: >-
   #     "{% if is_state('open_window_sensor', ['on', 'off']) %}true{% endif %}"
@@ -143,34 +143,47 @@ variables:
       {% else %}
         switch.turn_{{ dehumidifier_value }}
       {% endif %}
+  power_target: >-
+      {% if humidity_current_value > target_humidity_value_hi and
+          not open_window_sensor_value and is_within_time_range %}
+        on
+      {% elif humidity_current_value < target_humidity_value_lo or
+          open_window_sensor_value or not is_within_time_range %}
+        off
+      {% elif temperature_current_value < temperature_threshold and humidity_current_value < target_humidity_value_hi - target_humidity_delta + 0.5 or
+          open_window_sensor_value or not is_within_time_range %}
+        off
+      {% else %}
+        {{ dehumidifier_value }}
+      {% endif %}
 
 
 actions:
   - choose:
       - conditions:
-          - condition: trigger
-            id: humidity_high
+          # - condition: trigger
+          #   id: humidity_high
           # - condition: state
           #   entity_id: !input dehumidifier
           #   state: "off"
           - condition: template
-            value_template: "{{ not is_state(dehumidifier, dehumidifier_value)}}"
+            value_template: '{{ states(dehumidifier_input) != power_target }}'
         sequence:
           - service: "{{ power_action }}"
             target:
               entity_id: !input dehumidifier
-      - conditions:
-          - condition: trigger
-            id: humidity_low
-          # - condition: state
-          #   entity_id: !input dehumidifier
-          #   state: "on"
-          - condition: template
-            value_template: "{{ not is_state(dehumidifier, dehumidifier_value)}}"
-        sequence:
-          - service: "{{ power_action }}"
-            target:
-              entity_id: !input dehumidifier
+      # - conditions:
+      #     - condition: trigger
+      #       id: humidity_low
+      #     # - condition: state
+      #     #   entity_id: !input dehumidifier
+      #     #   state: "on"
+      #     - condition: template
+      #       value_template: '{{ states(dehumidifier_input) != power_target }}'
+      #   sequence:
+      #     - service: "{{ power_action }}"
+      #       target:
+      #         entity_id: !input dehumidifier
 
 
 
