@@ -145,15 +145,15 @@ actions:
           - service: "{{ power_action }}"
             target:
               entity_id: !input dehumidifier
-          # - action: select.select_option
-          #   metadata: {}
-          #   data:
-          #     option: Humidity
-          #   target:
-          #     entity_id: select.arete_two_12l_fewo41_mode
-          # - action: number.set_value
-          #   metadata: {}
-          #   data:
-          #     value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
-          #   target:
-          #     entity_id: number.arete_two_12l_fewo41_target_humidity
+          - action: select.select_option
+            metadata: {}
+            data:
+              option: Humidity
+            target:
+              entity_id: select.arete_two_12l_fewo41_mode
+          - action: number.set_value
+            metadata: {}
+            data:
+              value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
+            target:
+              entity_id: number.arete_two_12l_fewo41_target_humidity
