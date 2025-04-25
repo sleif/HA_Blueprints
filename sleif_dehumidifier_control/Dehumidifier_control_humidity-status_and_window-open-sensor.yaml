@@ -70,9 +70,6 @@ blueprint:
       description: "Select a humidity-capable device"
       selector:
         device:
-          filter:
-            - domain: sensor
-              device_class: humidity
 
 trigger:
   - platform: state
