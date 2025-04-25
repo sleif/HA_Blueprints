@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.10 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.11 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -88,9 +88,19 @@ trigger:
       - automation_reloaded
 
 variables:
-  dehumidifier_input: >
+  dehumidifier_power: >
     {{ device_entities(dehumidifier_device)
         | select('match', '^switch\\..*power')
+        | list
+        | first }}
+  dehumidifier_mode: >
+    {{ device_entities(dehumidifier_device)
+        | select('match', '^select\\..*mode')
+        | list
+        | first }}
+  dehumidifier_target_humidity: >
+    {{ device_entities(dehumidifier_device)
+        | select('match', '^number\\..*target_humidity')
         | list
         | first }}
   condition_start_time_input: !input condition_start_time
@@ -117,8 +127,8 @@ variables:
     {% endif %}
   open_window_sensor_input: !input open_window_sensor
   open_window_sensor_value: "{{ states(open_window_sensor_input) | bool(false) }}"
-  # dehumidifier_input: !input dehumidifier
-  dehumidifier_value: "{{ states(dehumidifier_input) | lower }}"
+  # dehumidifier_power: !input dehumidifier
+  dehumidifier_value: "{{ states(dehumidifier_power) | lower }}"
   is_across_midnight: >
     {% if condition_start_time_value > condition_end_time_value %}
     True
@@ -150,7 +160,7 @@ actions:
   - choose:
       - conditions:
           - condition: template
-            value_template: '{{ states(dehumidifier_input) != power_target or  }}'
+            value_template: '{{ states(dehumidifier_power) != power_target }}'
         sequence:
           - service: "{{ power_action }}"
             target:
@@ -160,10 +170,10 @@ actions:
             data:
               option: Humidity
             target:
-              entity_id: select.arete_two_12l_fewo41_mode
+              entity_id: "{{ dehumidifier_mode }}"
           - service: number.set_value
             metadata: {}
             data:
               value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
             target:
-              entity_id: number.arete_two_12l_fewo41_target_humidity
+              entity_id: "{{ dehumidifier_target_humidity }}"
