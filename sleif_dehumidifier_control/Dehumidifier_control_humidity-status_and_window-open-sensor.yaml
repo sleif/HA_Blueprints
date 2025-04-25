@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.11 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.12 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -58,16 +58,9 @@ blueprint:
         entity:
           domain: binary_sensor
           device_class: opening
-    dehumidifier:
-      name: Dehumidifier
-      description: "Dehumidifier device"
-      selector:
-        entity:
-          domain: switch
-          multiple: false
     dehumidifier_device:
       name: Dehumidifier Device
-      description: "Select a humidity-capable device"
+      description: "Select a dehumidifier device"
       selector:
         device:
 
@@ -88,18 +81,19 @@ trigger:
       - automation_reloaded
 
 variables:
+  dehumidifier_device_input: !input dehumidifier_device
   dehumidifier_power: >
-    {{ device_entities(dehumidifier_device)
+    {{ device_entities(dehumidifier_device_input)
         | select('match', '^switch\\..*power')
         | list
         | first }}
   dehumidifier_mode: >
-    {{ device_entities(dehumidifier_device)
+    {{ device_entities(dehumidifier_device_input)
         | select('match', '^select\\..*mode')
         | list
         | first }}
   dehumidifier_target_humidity: >
-    {{ device_entities(dehumidifier_device)
+    {{ device_entities(dehumidifier_device_input)
         | select('match', '^number\\..*target_humidity')
         | list
         | first }}
@@ -164,7 +158,7 @@ actions:
         sequence:
           - service: "{{ power_action }}"
             target:
-              entity_id: !input dehumidifier
+              entity_id: "{{ dehumidifier_power }}"
           - service: select.select_option
             metadata: {}
             data:
