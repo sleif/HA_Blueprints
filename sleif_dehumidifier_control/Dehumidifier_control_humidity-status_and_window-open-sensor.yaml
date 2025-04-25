@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.8 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.9 -`\n\nControls a dehumidifier depending on the humidity"
   domain: automation
 
   input:
@@ -65,6 +65,14 @@ blueprint:
         entity:
           domain: switch
           multiple: false
+    dehumidifier_device:
+      name: Dehumidifier Device
+      description: "Select a humidity-capable device"
+      selector:
+        device:
+          filter:
+            - domain: sensor
+              device_class: humidity
 
 trigger:
   - platform: state
@@ -83,6 +91,11 @@ trigger:
       - automation_reloaded
 
 variables:
+  dehumidifier_input: >
+    {{ device_entities(dehumidifier_device)
+        | select('match', '^switch\\..*power')
+        | list
+        | first }}
   condition_start_time_input: !input condition_start_time
   condition_start_time_value: "{{ condition_start_time_input | today_at() | as_timestamp() | int }}"
   condition_end_time_input: !input condition_end_time
@@ -107,7 +120,7 @@ variables:
     {% endif %}
   open_window_sensor_input: !input open_window_sensor
   open_window_sensor_value: "{{ states(open_window_sensor_input) | bool(false) }}"
-  dehumidifier_input: !input dehumidifier
+  # dehumidifier_input: !input dehumidifier
   dehumidifier_value: "{{ states(dehumidifier_input) | lower }}"
   is_across_midnight: >
     {% if condition_start_time_value > condition_end_time_value %}
@@ -140,7 +153,7 @@ actions:
   - choose:
       - conditions:
           - condition: template
-            value_template: '{{ states(dehumidifier_input) != power_target }}'
+            value_template: '{{ states(dehumidifier_input) != power_target or  }}'
         sequence:
           - service: "{{ power_action }}"
             target:
