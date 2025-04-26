@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier - status notifications
-  description: "`- Version: 1.1 -`\n\nNotifies about important device status changes."
+  description: "`- Version: 1.2 -`\n\nNotifies about important device status changes."
   domain: automation
 
   input:
@@ -24,8 +24,8 @@ trigger:
       - !input dehumidifier_status_code
     for:
       hours: 0
-      minutes: 0
-      seconds: 10
+      minutes: 5
+      seconds: 0
     to:
       - unavailable
       - unknown
