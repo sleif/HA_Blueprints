@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier control managed device
-  description: "`- Version: 1.12 -`\n\nControls a dehumidifier depending on the humidity"
+  description: "`- Version: 1.13 -`\n\nControls a manageable dehumidifier device depending on the humidity"
   domain: automation
 
   input:
@@ -81,59 +81,57 @@ trigger:
       - automation_reloaded
 
 variables:
-  dehumidifier_device_input: !input dehumidifier_device
+  _dehumidifier_device_input: !input dehumidifier_device
   dehumidifier_power: >
-    {{ device_entities(dehumidifier_device_input)
+    {{ device_entities(_dehumidifier_device_input)
         | select('match', '^switch\\..*power')
         | list
         | first }}
   dehumidifier_mode: >
-    {{ device_entities(dehumidifier_device_input)
+    {{ device_entities(_dehumidifier_device_input)
         | select('match', '^select\\..*mode')
         | list
         | first }}
   dehumidifier_target_humidity: >
-    {{ device_entities(dehumidifier_device_input)
+    {{ device_entities(_dehumidifier_device_input)
         | select('match', '^number\\..*target_humidity')
         | list
         | first }}
-  condition_start_time_input: !input condition_start_time
-  condition_start_time_value: "{{ condition_start_time_input | today_at() | as_timestamp() | int }}"
-  condition_end_time_input: !input condition_end_time
-  condition_end_time_value: "{{ condition_end_time_input| today_at() | as_timestamp() | int }}"
-  now_time: "{{ now()|as_timestamp() | int }}"
-  helper_fewo_occupancy_input: !input helper_fewo_occupancy
-  helper_fewo_occupancy_value: "{{ states(helper_fewo_occupancy_input) | bool(false) }}"
-  humidity_current_input: !input humidity_current
-  humidity_current_value: "{{ states(humidity_current_input) | float }}"
-  temperature_current_input: !input temperature_current
-  temperature_current_value: "{{ states(temperature_current_input) | float }}"
+  _condition_start_time_input: !input condition_start_time
+  condition_start_time_value: "{{ _condition_start_time_input | today_at() | as_timestamp() | int }}"
+  _condition_end_time_input: !input condition_end_time
+  condition_end_time_value: "{{ _condition_end_time_input| today_at() | as_timestamp() | int }}"
+  _now_time: "{{ now()|as_timestamp() | int }}"
+  _helper_fewo_occupancy_input: !input helper_fewo_occupancy
+  helper_fewo_occupancy_value: "{{ states(_helper_fewo_occupancy_input) | bool(false) }}"
+  _humidity_current_input: !input humidity_current
+  humidity_current_value: "{{ states(_humidity_current_input) | float }}"
+  _temperature_current_input: !input temperature_current
+  temperature_current_value: "{{ states(_temperature_current_input) | float }}"
   temperature_threshold: 13
   target_humidity_delta: 5
-  target_humidity_input: !input target_humidity
-  target_humidity_value_lo: "{{ target_humidity_input | float(60) - target_humidity_delta/2 }}"
-  #target_humidity_value_hi: "{{ target_humidity_input | float(60) + target_humidity_delta/2 }}"
+  _target_humidity_input: !input target_humidity
+  target_humidity_value_lo: "{{ _target_humidity_input | float(60) - target_humidity_delta/2 }}"
   target_humidity_value_hi: >
     {% if temperature_current_value < temperature_threshold %}
-    {{ target_humidity_input | float(60) + target_humidity_delta/2+target_humidity_delta }}
+    {{ _target_humidity_input | float(60) + target_humidity_delta/2+target_humidity_delta }}
     {% else %}
-    {{ target_humidity_input | float(60) + target_humidity_delta/2 }}
+    {{ _target_humidity_input | float(60) + target_humidity_delta/2 }}
     {% endif %}
   open_window_sensor_input: !input open_window_sensor
   open_window_sensor_value: "{{ states(open_window_sensor_input) | bool(false) }}"
-  # dehumidifier_power: !input dehumidifier
   dehumidifier_value: "{{ states(dehumidifier_power) | lower }}"
-  is_across_midnight: >
+  _is_across_midnight: >
     {% if condition_start_time_value > condition_end_time_value %}
     True
     {% else %}
     False
     {% endif %}
   is_within_time_range: >
-    {% if is_across_midnight %}
-    {{ ( now_time >= condition_start_time_value or now_time < condition_end_time_value ) or not helper_fewo_occupancy_value }}
+    {% if _is_across_midnight %}
+    {{ ( _now_time >= condition_start_time_value or _now_time < condition_end_time_value ) or not helper_fewo_occupancy_value }}
     {% else %}
-    {{ condition_start_time_value <= now_time < condition_end_time_value or not helper_fewo_occupancy_value }}
+    {{ condition_start_time_value <= _now_time < condition_end_time_value or not helper_fewo_occupancy_value }}
     {% endif %}
   power_target: >-
       {% if humidity_current_value > target_humidity_value_hi and
@@ -168,6 +166,6 @@ actions:
           - service: number.set_value
             metadata: {}
             data:
-              value: "{{ target_humidity_input | int(60) - target_humidity_delta }}"
+              value: "{{ _target_humidity_input | int(60) - target_humidity_delta }}"
             target:
               entity_id: "{{ dehumidifier_target_humidity }}"
