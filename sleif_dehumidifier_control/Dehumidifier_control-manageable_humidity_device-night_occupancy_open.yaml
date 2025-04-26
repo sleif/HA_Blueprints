@@ -1,6 +1,6 @@
 blueprint:
-  name: sleif dehumidifier control managed device
-  description: "`- Version: 1.13 -`\n\nControls a manageable dehumidifier device depending on the humidity"
+  name: sleif dehumidifier - control a manageable device
+  description: "`- Version: 1.14 -`\n\nControls a manageable dehumidifier device depending on the humidity"
   domain: automation
 
   input:
