@@ -32,7 +32,7 @@ trigger:
       - "1"
 
 actions:
-  - action: !input notify_service
+  - service: !input notify_service
     metadata: {}
     data:
       message: >
