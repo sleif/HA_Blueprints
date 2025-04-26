@@ -1,0 +1,40 @@
+blueprint:
+  name: sleif dehumidifier - status notifications
+  description: "`- Version: 1.1 -`\n\nNotifies about important device status changes."
+  domain: automation
+
+  input:
+    dehumidifier_status_code:
+      name: Status Code Sensor
+      description: "Sensor that contains the current humidity"
+      selector:
+        entity:
+          domain: sensor
+          # device_class: humidity
+          multiple: false
+    notify_service:
+      name: Notification Service
+      selector:
+        entity:
+          domain: notify
+
+trigger:
+  - platform: state
+    entity_id:
+      - !input dehumidifier_status_code
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    to:
+      - unavailable
+      - unknown
+      - "1"
+
+actions:
+  - action: !input notify_service
+    metadata: {}
+    data:
+      message: >
+        "{{ 'Entfeuchter Tank leeren: ' ~ this.attributes.friendly_name if trigger.to_state.state == '1'
+        else this.attributes.friendly_name ~ ': ' ~ trigger.to_state.state }}"
