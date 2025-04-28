@@ -158,31 +158,29 @@ variables:
   power_plug_input: !input power_plug
 
 actions:
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: "{{ power_plug_input != '' }}"
-        sequence:
-          - service: switch.turn_on
-            target:
-              entity_id: "{{ power_plug_input }}"
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: '{{ states(dehumidifier_power) != power_target }}'
-        sequence:
-          - service: "{{ power_action }}"
-            target:
-              entity_id: "{{ dehumidifier_power }}"
-          - service: select.select_option
-            metadata: {}
-            data:
-              option: Humidity
-            target:
-              entity_id: "{{ dehumidifier_mode }}"
-          - service: number.set_value
-            metadata: {}
-            data:
-              value: "{{ _target_humidity_input | int(60) - target_humidity_delta }}"
-            target:
-              entity_id: "{{ dehumidifier_target_humidity }}"
+  - if:
+      - condition: template
+        value_template: "{{ power_plug_input != '' }}"
+    then:
+      - service: switch.turn_on
+        target:
+          entity_id: "{{ power_plug_input }}"
+  - if:
+      - condition: template
+        value_template: '{{ states(dehumidifier_power) != power_target }}'
+    then:
+      - service: "{{ power_action }}"
+        target:
+          entity_id: "{{ dehumidifier_power }}"
+      - service: select.select_option
+        metadata: {}
+        data:
+          option: Humidity
+        target:
+          entity_id: "{{ dehumidifier_mode }}"
+      - service: number.set_value
+        metadata: {}
+        data:
+          value: "{{ _target_humidity_input | int(60) - target_humidity_delta }}"
+        target:
+          entity_id: "{{ dehumidifier_target_humidity }}"
