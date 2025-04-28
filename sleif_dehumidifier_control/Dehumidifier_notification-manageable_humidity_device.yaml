@@ -1,6 +1,6 @@
 blueprint:
   name: sleif dehumidifier - status notifications
-  description: "`- Version: 1.2 -`\n\nNotifies about important device status changes."
+  description: "`- Version: 1.3 -`\n\nNotifies about important device status changes."
   domain: automation
 
   input:
@@ -16,7 +16,7 @@ blueprint:
       name: Notification Service
       selector:
         entity:
-          domain: service
+          domain: notify
 
 trigger:
   - platform: state
