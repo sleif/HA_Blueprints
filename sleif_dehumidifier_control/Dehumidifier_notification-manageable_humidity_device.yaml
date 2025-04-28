@@ -15,8 +15,8 @@ blueprint:
     notify_service:
       name: Notification Service
       selector:
-        service:
-          domain: notify
+        entity:
+          domain: service
 
 trigger:
   - platform: state
